@@ -68,15 +68,36 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void run() {
         running = true;
+        long beforeTime, timeDiff, sleepTime;
+        beforeTime = System.currentTimeMillis();
+        /* Metoden currentTimeMillis() i klassen System returnerar aktuell tid i formatet millisekund. Millisekund kommer att returneras som tidsenhet. */
+
         while (running) {
+
             gameUpdate();
             gameRender();
-            paintScreen();
+            paintScreen(); //Här har vi en aktiv rendering
+
+            /*
+             * Följande uträkning är en tajmingkod och den räknar ut hur länge sleep ska
+             * köras (vi kanske vill uppnå 100fps under 10 sekunder men då vissa
+             * system/datorer etc. är snabbare än andra så behöver vi ha en uträkning som
+             * används ifall det går för snabbt, t.ex. om update/render tar 6 sekunder så
+             * ska sleep anropas i 4 sekunder)
+             */
+
+            timeDiff = System.currentTimeMillis() - beforeTime;
+            long period = 100; //LOKAL VARIABEL. Ej klart!
+            sleepTime = period - timeDiff; //hur lång tid vi har kvar i loopen. Period är variablen som håller hur länge det ska ta, t.ex. 100fs/10ms
+
+            if(sleepTime <= 0) //Under/render tog längre tid än 'period'.
+                sleepTime = 5;  //Vi sover linte ändå
 
             try {
-                Thread.sleep(20);
+                Thread.sleep(sleepTime);
             } catch (InterruptedException ex) {
             }
+            beforeTime = System.currentTimeMillis(); 
         }
         System.exit(0);
     }
@@ -84,7 +105,7 @@ public class GamePanel extends JPanel implements Runnable {
     private void paintScreen() {
         Graphics g;
         try {
-            g = this.getGraphics();
+            g = this.getGraphics(); //getGraphics() hämtar hela tiden den senaste målarduken/hur fönstret ser ut.
             if ((g != null) && (dbImage != null)) {
                 g.drawImage(dbImage, 0, 0, null);
                 Toolkit.getDefaultToolkit().sync();
@@ -123,11 +144,13 @@ public class GamePanel extends JPanel implements Runnable {
 
     }
 
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (dbImage != null)
-            g.drawImage(dbImage, 0, 0, this);
-    }
+    /*
+     * public void paintComponent(Graphics g) {
+     * super.paintComponent(g);
+     * if (dbImage != null)
+     * g.drawImage(dbImage, 0, 0, this);
+     * }
+     */
 
     private void testPress(int x, int y) {
         if (!gameOver)
